@@ -2,17 +2,21 @@
 """
 
 # std imports
+from collections import defaultdict
+import csv
 from pathlib import Path
-from typing import List
+from typing import DefaultDict, List
 
 # 3rd party imports
 from pyteomics.mzml import read as read_mzml  # type: ignore[import-untyped]
 
 # internal imports
+from macdii.analyte_quantification import AnalyteQuantification
 from macdii.cli import Cli
-from macdii.mz_target import MzTarget
-from macdii.mz_target_match import MzTargetMatch
-from macdii.mz_target_matches_grouped import MzTargetMatchesGrouped
+from macdii.analyte import Analyte
+from macdii.analyte_match import AnalyteMatch, Ms2AnalyteMatch
+
+# from macdii.mz_target_matches_grouped import MzTargetMatchesGrouped
 
 
 def main():
@@ -21,19 +25,19 @@ def main():
     # Parse command line arguments
     args = Cli().parse()
 
-    # Read mz_target_list, remove empty lines and duplicates and convert to float
+    analytes = []
+    with open(args.analytes_file, "r", encoding="utf-8") as file:
+        analytes = Analyte.from_csv(
+            file,
+            args.precursor_tol_lower,
+            args.precursor_tol_upper,
+            args.fragment_tol_lower,
+            args.fragment_tol_upper,
+        )
 
-    mz_target_list = args.mz_target_list_path.read_text(encoding="utf-8").split("\n")
-    mz_target_list = list(filter(lambda x: x != "", mz_target_list))
-    mz_target_list = list({float(mz) for mz in mz_target_list})
-
-    # Create MzTarget objects
-    mz_target_list = [
-        MzTarget(mz, args.tol_lower, args.tol_upper) for mz in mz_target_list
-    ]
-
-    # Read mzML files and search for matches
-    target_matches: List[MzTargetMatch] = []  # type: ignore[annotation-unchecked]
+    matching_precursors = defaultdict(list)
+    matching_quantifiers = defaultdict(list)
+    matching_qualifiers = defaultdict(list)
 
     # Iterate over all mzML files and open them
     for mzml_path in args.mzml_paths:
@@ -42,52 +46,76 @@ def main():
             # Iterate over all spectra in the mzML file
             for spectrum in mzml:
                 # Check each ion in the spectrum for a match with the targeted m/z
-                for mz_target in mz_target_list:
+                for analyte in analytes:
                     for ion_idx, ion in enumerate(spectrum["m/z array"]):
-                        if ion not in mz_target:
-                            continue
-                        target_matches.append(
-                            MzTargetMatch(
-                                mzml_path.name,
-                                spectrum["id"],
-                                spectrum["ms level"],
-                                spectrum["scanList"]["scan"][0]["scan start time"],
-                                ion,
-                                spectrum["intensity array"][ion_idx],
-                                mz_target.mz,
-                            )
-                        )
 
-    # Write target_matches to a TSV file
-    with Path("./target_matches.tsv").open(
-        "w", encoding="utf-8"
-    ) as target_matches_file:
-        target_matches_file.write(MzTargetMatch.CSV_HEADER + "\n")
-        for target_match in target_matches:
-            target_matches_file.write(str(target_match) + "\n")
+                        match spectrum["ms level"]:
+                            case 1:
+                                if not analyte.precursor_contains(ion):
+                                    continue
+                                matching_precursors[analyte.name].append(
+                                    AnalyteMatch(
+                                        analyte,
+                                        mzml_path.name,
+                                        spectrum["id"],
+                                        ion,
+                                        spectrum["intensity array"][ion_idx],
+                                    )
+                                )
+                            case 2:
+                                if analyte.quantifier_contains(ion):
+                                    matching_quantifiers[analyte.name].append(
+                                        Ms2AnalyteMatch(
+                                            analyte,
+                                            mzml_path.name,
+                                            spectrum["id"],
+                                            ion,
+                                            spectrum["intensity array"][ion_idx],
+                                            spectrum["precursorList"]["precursor"][0][
+                                                "selectedIonList"
+                                            ]["selectedIon"][0]["selected ion m/z"],
+                                        )
+                                    )
+                                elif analyte.qualifier_contains(ion):
+                                    matching_qualifiers[analyte.name].append(
+                                        Ms2AnalyteMatch(
+                                            analyte,
+                                            mzml_path.name,
+                                            spectrum["id"],
+                                            ion,
+                                            spectrum["intensity array"][ion_idx],
+                                            spectrum["selectedIonList"][0][
+                                                "selected ion m/z"
+                                            ],
+                                        )
+                                    )
 
-    # Group target_matches by targeted m/z and write to a TSV file
-    target_matches_grouped = MzTargetMatchesGrouped(target_matches)
-    keys = target_matches_grouped.keys()
-    keys.sort()
+    with Path("./precursor_matches.tsv").open("w", encoding="utf-8") as file:
+        add_header = True
+        for values in matching_precursors.values():
+            AnalyteMatch.to_tsv(file, values, add_header)
+            add_header = False
 
-    # Write average m/z, average intensity and count for each targeted m/z
-    with Path("./target_matches_grouped.tsv").open(
-        "w", encoding="utf-8"
-    ) as target_matches_grouped_file:
-        target_matches_grouped_file.write(MzTargetMatchesGrouped.TSV_HEADER + "\n")
-        for key in keys:
-            average_mz = sum(
-                target_matches.mz for target_matches in target_matches_grouped[key]
-            ) / len(target_matches_grouped[key])
-            average_intensity = sum(
-                target_matches.intensity
-                for target_matches in target_matches_grouped[key]
-            ) / len(target_matches_grouped[key])
+    with Path("./quantifier_matches.tsv").open("w", encoding="utf-8") as file:
+        add_header = True
+        for values in matching_quantifiers.values():
+            Ms2AnalyteMatch.to_tsv(file, values, add_header)
+            add_header = False
 
-            target_matches_grouped_file.write(
-                f"{key}\t{average_mz}\t{average_intensity}\t{len(target_matches_grouped[key])}\n"
-            )
+    with Path("./qualifier_matches.tsv").open("w", encoding="utf-8") as file:
+        add_header = True
+        for values in matching_qualifiers.values():
+            Ms2AnalyteMatch.to_tsv(file, values, add_header)
+            add_header = False
+
+    with Path("./quantification.tsv").open("w", encoding="utf-8") as file:
+        quantifications = [
+            AnalyteQuantification(matches)
+            for matches in matching_quantifiers.values()
+            if len(matches) > 0
+        ]
+
+        AnalyteQuantification.to_tsv(file, quantifications, add_header=True)
 
 
 if __name__ == "__main__":

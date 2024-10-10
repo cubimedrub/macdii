@@ -19,23 +19,34 @@ class Cli:
         )
 
         self.parser.add_argument(
-            "tol_lower",
+            "precursor_tol_lower",
             type=float,
-            help="Lower tolerance in ppm for targeted m/z.",
+            help="Lower precursor tolerance in ppm for targeted m/z.",
         )
 
         self.parser.add_argument(
-            "tol_upper",
+            "precursor_tol_upper",
             type=float,
-            help="Upper tolerance in ppm for targeted m/z.",
+            help="Upper precursor tolerance in ppm for targeted m/z.",
         )
 
         self.parser.add_argument(
-            "mz_target_list_path",
+            "fragment_tol_lower",
+            type=float,
+            help="Lower fragment tolerance in ppm for targeted m/z.",
+        )
+
+        self.parser.add_argument(
+            "fragment_tol_upper",
+            type=float,
+            help="Upper fragment tolerance in ppm for targeted m/z.",
+        )
+
+        self.parser.add_argument(
+            "analytes_file",
             type=Path,
             help=(
-                "Path to a file containing a list of targeted m/z values. "
-                "Simple txt files with one m/z value per line."
+                "CSV files with analytes. Columns: name, precursor mz, fragment quantifier mz, fragment qualifier mz"
             ),
         )
 
