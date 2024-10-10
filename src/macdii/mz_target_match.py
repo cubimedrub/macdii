@@ -51,4 +51,4 @@ class MzTargetMatch:
 
     def __str__(self) -> str:
         """Returns a TSV representation of the match."""
-        return f"{self.filename}\t{self.spectrum_id}\t{self.ms_level}\t{self.mz}\t{self.rt}\t{self.intensity}\t{self.targeted_mz}"
+        return f"{self.filename}\t{self.spectrum_id}\t{self.ms_level}\t{self.rt}\t{self.mz}\t{self.intensity}\t{self.targeted_mz}"
