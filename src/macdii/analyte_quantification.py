@@ -1,6 +1,5 @@
 import csv
 from typing import ClassVar, List, TextIO, Tuple
-from macdii.analyte import Analyte
 from macdii.analyte_match import AnalyteMatch
 
 
