@@ -4,6 +4,7 @@
 import csv
 from typing import ClassVar, List, Self, TextIO, Tuple
 
+# internal imports
 from macdii.analyte import Analyte
 
 

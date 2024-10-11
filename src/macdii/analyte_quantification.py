@@ -1,5 +1,8 @@
+# std imports
 import csv
 from typing import ClassVar, List, TextIO, Tuple
+
+# internal imports
 from macdii.analyte_match import AnalyteMatch
 
 
