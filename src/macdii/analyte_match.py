@@ -2,7 +2,7 @@
 
 # std imports
 import csv
-from typing import ClassVar, List, TextIO, Tuple
+from typing import ClassVar, List, Self, TextIO, Tuple
 
 from macdii.analyte import Analyte
 
@@ -55,9 +55,7 @@ class AnalyteMatch:
         return f"{self.analyte.name}\t{self.filename}\t{self.spectrum_id}\t{self.mz}\t{self.intensity}"
 
     @classmethod
-    def to_tsv(
-        cls, file: TextIO, matches: List["AnalyteMatch"], add_header=False
-    ) -> None:
+    def to_tsv(cls, file: TextIO, matches: List[Self], add_header=False) -> None:
         """Write a list of AnalyteMatch objects to a TSV file."""
         writer = csv.writer(file, delimiter="\t", quoting=csv.QUOTE_NONNUMERIC)
         if add_header:
@@ -119,7 +117,7 @@ class Ms2AnalyteMatch(AnalyteMatch):
     def to_tsv(
         cls,
         file: TextIO,
-        matches: List["Ms2AnalyteMatch"],
+        matches: List[Self],
         add_header=False,
     ) -> None:
         """Write a list of AnalyteMatch objects to a TSV file."""
