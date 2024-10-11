@@ -2,7 +2,7 @@
 
 # std imports
 import csv
-from typing import List, TextIO, Tuple
+from typing import List, Self, TextIO, Tuple
 
 
 class Analyte:
@@ -113,7 +113,7 @@ class Analyte:
         precursor_tolerance_upper: float,
         fragment_tolerance_lower: float,
         fragment_tolerance_upper: float,
-    ) -> List["Analyte"]:
+    ) -> List[Self]:
         """
         Read analytes from a CSV file.
 
@@ -130,24 +130,22 @@ class Analyte:
         fragment_tolerance_upper : float
             The upper fragment tolerance in ppm.
         """
-        analytes = []
         reader = csv.reader(
             csv_content,
         )
         # skip header
         next(reader)
 
-        for row in reader:
-            analytes.append(
-                cls(
-                    row[0],
-                    float(row[1]),
-                    float(row[2]),
-                    float(row[3]),
-                    precursor_tolerance_lower,
-                    precursor_tolerance_upper,
-                    fragment_tolerance_lower,
-                    fragment_tolerance_upper,
-                )
+        return [
+            cls(
+                row[0],
+                float(row[1]),
+                float(row[2]),
+                float(row[3]),
+                precursor_tolerance_lower,
+                precursor_tolerance_upper,
+                fragment_tolerance_lower,
+                fragment_tolerance_upper,
             )
-        return analytes
+            for row in reader
+        ]
