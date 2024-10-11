@@ -1,4 +1,4 @@
-"""Module for a match between a targeted m/z and an observed m/z in a spectrum."""
+"""Matches between analytes and MS1 and MS2 spectra."""
 
 # std imports
 import csv
@@ -9,7 +9,7 @@ from macdii.analyte import Analyte
 
 
 class AnalyteMatch:
-    """Represents a match between a targeted m/z and an observed m/z in a spectrum."""
+    """Match between analyte and MS1 spectrum."""
 
     CSV_HEADER: ClassVar[Tuple[str, str, str, str, str]] = (
         "analyte",

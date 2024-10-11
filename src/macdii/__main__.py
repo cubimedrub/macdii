@@ -35,6 +35,7 @@ def main():
             args.fragment_tol_upper,
         )
 
+    # Create dictionaries to store matches for precursors, quantifiers, and qualifiers
     matching_precursors = defaultdict(list)
     matching_quantifiers = defaultdict(list)
     matching_qualifiers = defaultdict(list)
@@ -45,14 +46,14 @@ def main():
             mzml = read_mzml(mzml_file)
             # Iterate over all spectra in the mzML file
             for spectrum in mzml:
-                # Check each ion in the spectrum for a match with the targeted m/z
+                # Check if any analyte matches on of the measured ions
                 for analyte in analytes:
                     for ion_idx, ion in enumerate(spectrum["m/z array"]):
-
                         match spectrum["ms level"]:
                             case 1:
                                 if not analyte.precursor_contains(ion):
                                     continue
+                                # Add the match to the list of precursor matches
                                 matching_precursors[analyte.name].append(
                                     AnalyteMatch(
                                         analyte,
@@ -64,6 +65,7 @@ def main():
                                 )
                             case 2:
                                 if analyte.quantifier_contains(ion):
+                                    # Add the match to the list of quantifier matches
                                     matching_quantifiers[analyte.name].append(
                                         Ms2AnalyteMatch(
                                             analyte,
@@ -77,6 +79,7 @@ def main():
                                         )
                                     )
                                 elif analyte.qualifier_contains(ion):
+                                    # Add the match to the list of qualifier matches
                                     matching_qualifiers[analyte.name].append(
                                         Ms2AnalyteMatch(
                                             analyte,
@@ -90,6 +93,7 @@ def main():
                                         )
                                     )
 
+    # Write the matches to TSV files
     with Path("./precursor_matches.tsv").open("w", encoding="utf-8") as file:
         add_header = True
         for values in matching_precursors.values():

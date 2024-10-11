@@ -1,3 +1,5 @@
+"""Functions for working with analytes."""
+
 # std imports
 import csv
 from typing import List, TextIO, Tuple
@@ -48,7 +50,18 @@ class Analyte:
     def calc_mz_range(
         cls, mz: float, tolerance_upper_ppm: float, tolerance_lower_ppm: float
     ) -> Tuple[float, float]:
-        """Calculate the m/z range given a tolerance."""
+        """
+        Calculate the m/z range given a tolerance.
+
+        Parameters
+        ----------
+        mz : float
+            The m/z value.
+        tolerance_upper_ppm : float
+            The upper tolerance in ppm.
+        tolerance_lower_ppm : float
+            The lower tolerance in ppm.
+        """
         tol_lower = mz / 1000000 * tolerance_lower_ppm
         tol_upper = mz / 1000000 * tolerance_upper_ppm
         return mz - tol_lower, mz + tol_upper
@@ -60,15 +73,36 @@ class Analyte:
         )
 
     def precursor_contains(self, mz: float) -> bool:
-        """Check if the precursor m/z range contains a given m/z."""
+        """
+        Check if the precursor m/z range contains a given m/z.
+
+        Parameters
+        ----------
+        mz : float
+            The m/z to check.
+        """
         return self.precursor_mz_range[0] <= mz <= self.precursor_mz_range[1]
 
     def quantifier_contains(self, mz: float) -> bool:
-        """Check if the quantifier m/z range contains a given m/z."""
+        """
+        Check if the quantifier m/z range contains a given m/z.
+
+        Parameters
+        ----------
+        mz : float
+            The m/z to check.
+        """
         return self.quantifier_mz_range[0] <= mz <= self.quantifier_mz_range[1]
 
     def qualifier_contains(self, mz: float) -> bool:
-        """Check if the qualifier m/z range contains a given m/z."""
+        """
+        Check if the qualifier m/z range contains a given m/z.
+
+        Parameters
+        ----------
+        mz : float
+            The m/z to check.
+        """
         return self.qualifier_mz_range[0] <= mz <= self.qualifier_mz_range[1]
 
     @classmethod
@@ -80,7 +114,22 @@ class Analyte:
         fragment_tolerance_lower: float,
         fragment_tolerance_upper: float,
     ) -> List["Analyte"]:
-        """Read analytes from a CSV file."""
+        """
+        Read analytes from a CSV file.
+
+        Parameters
+        ----------
+        csv_content : TextIO
+            The CSV file or buffer
+        precursor_tolerance_lower : float
+            The lower precursor tolerance in ppm.
+        precursor_tolerance_upper : float
+            The upper precursor tolerance in ppm.
+        fragment_tolerance_lower : float
+            The lower fragment tolerance in ppm.
+        fragment_tolerance_upper : float
+            The upper fragment tolerance in ppm.
+        """
         analytes = []
         reader = csv.reader(
             csv_content,
