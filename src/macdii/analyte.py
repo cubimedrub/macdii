@@ -32,23 +32,23 @@ class Analyte:
         """Fragment ion m/z for qualification."""
 
         self.precursor_mz_range = self.__class__.calc_mz_range(
-            precursor_mz, precursor_mz_tolerance_upper, precursor_mz_tolerance_lower
+            precursor_mz, precursor_mz_tolerance_lower, precursor_mz_tolerance_upper
         )
         """The precursor m/z +/- tolerance for the analyte."""
 
         self.quantifier_mz_range = self.__class__.calc_mz_range(
-            quantifier_mz, fragment_mz_tolerance_upper, fragment_mz_tolerance_lower
+            quantifier_mz, fragment_mz_tolerance_lower, fragment_mz_tolerance_upper
         )
         """Fragment ion m/z +/- tolerance for quantification."""
 
         self.qualifier_mz_range = self.__class__.calc_mz_range(
-            qualifier_mz, fragment_mz_tolerance_upper, fragment_mz_tolerance_lower
+            qualifier_mz, fragment_mz_tolerance_lower, fragment_mz_tolerance_upper
         )
         """Fragment ion m/z +/- tolerance for qualification."""
 
     @classmethod
     def calc_mz_range(
-        cls, mz: float, tolerance_upper_ppm: float, tolerance_lower_ppm: float
+        cls, mz: float, tolerance_lower_ppm: float, tolerance_upper_ppm: float
     ) -> Tuple[float, float]:
         """
         Calculate the m/z range given a tolerance.
@@ -57,10 +57,10 @@ class Analyte:
         ----------
         mz : float
             The m/z value.
-        tolerance_upper_ppm : float
-            The upper tolerance in ppm.
         tolerance_lower_ppm : float
             The lower tolerance in ppm.
+        tolerance_upper_ppm : float
+            The upper tolerance in ppm.
         """
         tol_lower = mz / 1000000 * tolerance_lower_ppm
         tol_upper = mz / 1000000 * tolerance_upper_ppm
