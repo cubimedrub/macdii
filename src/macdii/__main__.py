@@ -3,9 +3,7 @@
 
 # std imports
 from collections import defaultdict
-import csv
 from pathlib import Path
-from typing import DefaultDict, List
 
 # 3rd party imports
 from pyteomics.mzml import read as read_mzml  # type: ignore[import-untyped]
