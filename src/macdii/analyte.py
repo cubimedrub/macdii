@@ -68,9 +68,7 @@ class Analyte:
 
     def __str__(self) -> str:
         """Return a string representation of the analyte."""
-        return (
-            f"{self.name}: {self.precursor_mz} {self.quantifier_mz} {self.qualifier_mz}"
-        )
+        return f"{self.name}"
 
     def precursor_contains(self, mz: float) -> bool:
         """

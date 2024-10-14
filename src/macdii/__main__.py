@@ -98,40 +98,30 @@ def main():
                                     )
 
     # Write the matches to TSV files
-    with args.output_folder.joinpath("./precursor_matches.tsv").open(
-        "w", encoding="utf-8"
-    ) as file:
-        add_header = True
-        for values in matching_precursors.values():
-            AnalyteMatch.to_tsv(file, values, add_header)
-            add_header = False
 
-    with args.output_folder.joinpath("./quantifier_matches.tsv").open(
-        "w", encoding="utf-8"
-    ) as file:
-        add_header = True
-        for values in matching_quantifiers.values():
-            Ms2AnalyteMatch.to_tsv(file, values, add_header)
-            add_header = False
+    AnalyteMatch.to_file(
+        args.output_folder.joinpath(f"precursor_matches.{args.output_type}"),
+        [match for matches in matching_precursors.values() for match in matches],
+    )
 
-    with args.output_folder.joinpath("./qualifier_matches.tsv").open(
-        "w", encoding="utf-8"
-    ) as file:
-        add_header = True
-        for values in matching_qualifiers.values():
-            Ms2AnalyteMatch.to_tsv(file, values, add_header)
-            add_header = False
+    Ms2AnalyteMatch.to_file(
+        args.output_folder.joinpath(f"quantifier_matches.{args.output_type}"),
+        [match for matches in matching_quantifiers.values() for match in matches],
+    )
 
-    with args.output_folder.joinpath("./quantification.tsv").open(
-        "w", encoding="utf-8"
-    ) as file:
-        quantifications = [
+    Ms2AnalyteMatch.to_file(
+        args.output_folder.joinpath(f"qualifier_matches.{args.output_type}"),
+        [match for matches in matching_qualifiers.values() for match in matches],
+    )
+
+    AnalyteQuantification.to_file(
+        args.output_folder.joinpath(f"quantification.{args.output_type}"),
+        [
             AnalyteQuantification(matches)
             for matches in matching_quantifiers.values()
             if len(matches) > 0
-        ]
-
-        AnalyteQuantification.to_tsv(file, quantifications, add_header=True)
+        ],
+    )
 
 
 if __name__ == "__main__":

@@ -1,22 +1,31 @@
 """Simple quantification of analytes."""
 
 # std imports
-import csv
-from typing import ClassVar, List, TextIO, Tuple
+from dataclasses import dataclass
+from pathlib import Path
+from typing import List, Self
+
+# external imports
+import pandas as pd
 
 # internal imports
+from macdii.analyte import Analyte
 from macdii.analyte_match import AnalyteMatch
+from macdii.utils import dataframe_to_file
 
 
+@dataclass
 class AnalyteQuantification:
     """Simple quantification of an analyte. Calculates the average m/z and intensity of a set of matches."""
 
-    CSV_HEADER: ClassVar[Tuple[str, str, str]] = (
-        "analyte",
-        "mz_average",
-        "intensity_average",
-    )
-    """Header for the TSV output."""
+    analyte: Analyte
+    """Analyte."""
+
+    mz_average: float
+    """Average m/z of the matches."""
+
+    intensity_average: float
+    """Average intensity of the matches."""
 
     def __init__(self, matches: List[AnalyteMatch]):
         """
@@ -45,26 +54,19 @@ class AnalyteQuantification:
         return f"{self.analyte.name}\t{self.mz_average}\t{self.intensity_average}"
 
     @classmethod
-    def to_tsv(
+    def to_file(
         cls,
-        file: TextIO,
-        quantifications: List["AnalyteQuantification"],
-        add_header=False,
+        file_path: Path,
+        quantifications: List[Self],
     ) -> None:
-        """Writes a list of AnalyteQuantification objects to a TSV file.
+        """Writes a list of AnalyteQuantification objects to a file.
 
         Parameters
         ----------
-        file : TextIO
+        file : BinaryIO
             Open file or buffer
         quantifications : List[&quot;AnalyteQuantification&quot;]
             List of quantifications to be written to the file
-        add_header : bool, optional
-            In case multiple quantifications needs to be written to the same file, this can be enables only for the first analyte, by default False
         """
-
-        writer = csv.writer(file, delimiter="\t", quoting=csv.QUOTE_NONNUMERIC)
-        if add_header:
-            writer.writerow(cls.CSV_HEADER)
-        for q in quantifications:
-            writer.writerow([q.analyte.name, q.mz_average, q.intensity_average])
+        df = pd.DataFrame(quantifications)
+        dataframe_to_file(df, file_path)

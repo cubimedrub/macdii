@@ -9,11 +9,13 @@ dependencies = [
     "lxml ~= 5.3",
     "numpy ~= 1.26",
     "pyteomics ~= 4.7",
+    "pandas ~= 2.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "black",
     "honcho",
+    "pandas-stubs",
     "pylint",
 ]

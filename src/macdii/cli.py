@@ -20,6 +20,14 @@ class Cli:
         )
 
         self.parser.add_argument(
+            "--output-type",
+            type=str,
+            default="tsv",
+            choices=["tsv", "xlsx"],
+            help="Output file type [default=tsv].",
+        )
+
+        self.parser.add_argument(
             "rt_start",
             type=float,
             help="Retention time start in seconds.",
