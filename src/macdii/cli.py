@@ -10,12 +10,25 @@ class Cli:
 
     def __init__(self):
         """Create a new command line interface for MaCDII."""
+
         self.parser = argparse.ArgumentParser(
             prog="MaCDII",
             description=(
                 "Mass Centric Direct Infusion Inspector "
                 "for searching targeted m/z in mzML files."
             ),
+        )
+
+        self.parser.add_argument(
+            "rt_start",
+            type=float,
+            help="Retention time start in seconds.",
+        )
+
+        self.parser.add_argument(
+            "rt_stop",
+            type=float,
+            help="Retention time stop in seconds.",
         )
 
         self.parser.add_argument(

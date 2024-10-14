@@ -13,8 +13,7 @@ from macdii.analyte_quantification import AnalyteQuantification
 from macdii.cli import Cli
 from macdii.analyte import Analyte
 from macdii.analyte_match import AnalyteMatch, Ms2AnalyteMatch
-
-# from macdii.mz_target_matches_grouped import MzTargetMatchesGrouped
+from macdii.utils import time_to_seconds
 
 
 def main():
@@ -44,6 +43,13 @@ def main():
             mzml = read_mzml(mzml_file)
             # Iterate over all spectra in the mzML file
             for spectrum in mzml:
+                # Get scan start time and check if it is within the specified range
+                scan_start_time = time_to_seconds(
+                    spectrum["scanList"]["scan"][0]["scan start time"],
+                    spectrum["scanList"]["scan"][0]["scan start time"].unit_info,
+                )
+                if not args.rt_start <= scan_start_time <= args.rt_stop:
+                    continue
                 # Check if any analyte matches on of the measured ions
                 for analyte in analytes:
                     for ion_idx, ion in enumerate(spectrum["m/z array"]):
