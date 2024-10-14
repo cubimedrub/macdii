@@ -98,25 +98,33 @@ def main():
                                     )
 
     # Write the matches to TSV files
-    with Path("./precursor_matches.tsv").open("w", encoding="utf-8") as file:
+    with args.output_folder.joinpath("./precursor_matches.tsv").open(
+        "w", encoding="utf-8"
+    ) as file:
         add_header = True
         for values in matching_precursors.values():
             AnalyteMatch.to_tsv(file, values, add_header)
             add_header = False
 
-    with Path("./quantifier_matches.tsv").open("w", encoding="utf-8") as file:
+    with args.output_folder.joinpath("./quantifier_matches.tsv").open(
+        "w", encoding="utf-8"
+    ) as file:
         add_header = True
         for values in matching_quantifiers.values():
             Ms2AnalyteMatch.to_tsv(file, values, add_header)
             add_header = False
 
-    with Path("./qualifier_matches.tsv").open("w", encoding="utf-8") as file:
+    with args.output_folder.joinpath("./qualifier_matches.tsv").open(
+        "w", encoding="utf-8"
+    ) as file:
         add_header = True
         for values in matching_qualifiers.values():
             Ms2AnalyteMatch.to_tsv(file, values, add_header)
             add_header = False
 
-    with Path("./quantification.tsv").open("w", encoding="utf-8") as file:
+    with args.output_folder.joinpath("./quantification.tsv").open(
+        "w", encoding="utf-8"
+    ) as file:
         quantifications = [
             AnalyteQuantification(matches)
             for matches in matching_quantifiers.values()

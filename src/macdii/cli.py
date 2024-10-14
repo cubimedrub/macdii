@@ -64,6 +64,12 @@ class Cli:
         )
 
         self.parser.add_argument(
+            "output_folder",
+            type=Path,
+            help=("Output folder to save the results."),
+        )
+
+        self.parser.add_argument(
             "mzml_paths",
             type=Path,
             nargs="+",
