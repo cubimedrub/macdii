@@ -1,0 +1,75 @@
+{
+    "src": {
+        "type": "remote",
+        "url": "https://github.com/cubimedrub/macdii",
+        "version": "main"
+    },
+    "nextflow_parameters": [
+        {
+            "name": "profile",
+            "value": "docker"
+        }
+    ],
+    "args": {
+        "dynamic": [
+            {
+                "type": "path",
+                "name": "analytes",
+                "label": "Analytes",
+                "desc": "CSV file with analytes (columns: analyte, precursor_mz, quantifier_mz, qualifier_mz)",
+                "selectable_files": true,
+                "selectable_folders": false
+            },
+            {
+                "type": "path",
+                "name": "spectraFolder",
+                "label": "Spectra folder",
+                "desc": "Folder containing .raw, .d or .mzML",
+                "selectable_files": false,
+                "selectable_folders": true
+            },
+            {
+                "type": "number",
+                "name": "rtStart",
+                "label": "Retention time start",
+                "desc": "When to start looking for analytes"
+            },
+            {
+                "type": "number",
+                "name": "rtEnd",
+                "label": "Retention time end",
+                "desc": "When to stop looking for analytes"
+            },
+            {
+                "type": "number",
+                "name": "precursorToleranceLower",
+                "label": "Precursor tolerance lower (ppm)",
+                "desc": ""
+            },
+            {
+                "type": "number",
+                "name": "precursorToleranceUpper",
+                "label": "Precursor tolerance upper (ppm)",
+                "desc": ""
+            },
+            {
+                "type": "number",
+                "name": "fragmentToleranceLower",
+                "label": "Fragment tolerance lower (ppm)",
+                "desc": ""
+            },
+            {
+                "type": "number",
+                "name": "fragmentToleranceUpper",
+                "label": "Fragment tolerance upper (ppm)",
+                "desc": ""
+            }
+        ],
+        "static": [
+            {
+                "name": "resultsFolder",
+                "value": "macdii_results"
+            }
+        ]
+    }
+}
