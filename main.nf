@@ -14,6 +14,8 @@ params.precursorToleranceUpper = 10
 params.fragmentToleranceLower = 10
 params.fragmentToleranceUpper = 10
 
+params.resultsFolder = "macdii_results"
+
 // Runtime parameters
 // Memory for the Thermo Raw File Parser, used 24 GB for a Raw file with 257409 MS scans 
 // and 4GB for a Raw file with 11352 MS scans (measured with `/usr/bin/time -v ...`). 10 GB seems legit for most cases.
@@ -45,6 +47,7 @@ process convert_thermo_raw_files {
     // can only run when profile docker is enabled
     when: workflow.profile == 'docker'
 
+    script:
     """
     if [ ! -f ${raw_file.getBaseName()}.mzML ]; then
         wine msconvert ${raw_file} --mzML --zlib --filter "peakPicking true 1-"
@@ -76,6 +79,7 @@ process convert_bruker_raw_folders {
     output:
     path "${raw_folder.baseName}.mzML"
 
+    script:
     """
     tdf2mzml.py -i ${raw_folder} -o ${raw_folder.baseName}.mzML --ms1_type centroid
     """
@@ -100,6 +104,7 @@ process macdaii {
     output:
     path "${mzml_file.baseName}"
 
+    script:
     """
     mkdir ${mzml_file.baseName}
     python -m macdii ${rt_start} ${rt_end} ${precursor_tolerance_lower} ${precursor_tolerance_upper} ${fragment_tolerance_lower} ${fragment_tolerance_upper} ${analytes} ./${mzml_file.baseName} $mzml_file
@@ -107,6 +112,7 @@ process macdaii {
 }
 
 workflow  {
+    main:
     analytes = Channel.fromPath(params.analytes)
 
     // Retrieve input files
@@ -127,7 +133,7 @@ workflow  {
         params.precursorToleranceUpper,
         params.fragmentToleranceLower,
         params.fragmentToleranceUpper,
-        params.analytes,
+        analytes,
         mzmls
     )
 
@@ -139,5 +145,19 @@ workflow  {
  * Move the output files to the results folder
  */
 output {
-    mode 'move'
+    mode "move"
 }
+
+/**
+ * Once https://github.com/nextflow-io/nextflow/issues/5443#issuecomment-2445609593
+ * is resolved and MAcWorP is updated to 24.10
+ * we can use the following code to move the output files to the results folder
+ * and replace `results >> params.resultsFolder` with `results >> "root"`
+ * in the workflow
+ */
+// output {
+//     "root" {
+//         mode "move"
+//         path "."
+//     }
+// }
