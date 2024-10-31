@@ -19,13 +19,13 @@ jobs:
     - name: Build Docker image
       id: build
       run: |
-        docker build -t ghcr.io/${{ github.repository }}:${{ github.ref }} .
+        docker build -t ghcr.io/${{ github.repository }}:${{ github.ref_name }} .
 
     - name: Run tests in Docker container
       id: test
       if: steps.build.outcome == 'success'
       run: |
-        docker run --rm --entrypoint "" ghcr.io/${{ github.repository }}:${{ github.ref }} python -m unittest discover tests '*_test.py' 
+        docker run --rm --entrypoint "" ghcr.io/${{ github.repository }}:${{ github.ref_name }} python -m unittest discover tests '*_test.py' 
 
     - name: Log in to GitHub Container Registry
       id: registry_login
