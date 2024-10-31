@@ -36,4 +36,4 @@ jobs:
     - name: Push Docker image
       if: steps.registry_login.outcome == 'success' && github.event_name != 'pull_request'
       run: |
-        docker push ghcr.io/${{ github.repository }}:${{ github.ref }}
+        docker push ghcr.io/${{ github.repository }}:${{ github.ref_name }}
