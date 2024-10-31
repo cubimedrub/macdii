@@ -1,0 +1,39 @@
+name: Build, test and publish
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Build Docker image
+      id: build
+      run: |
+        docker build -t ghcr.io/${{ github.repository }}:${{ github.ref }} .
+
+    - name: Run tests in Docker container
+      id: test
+      if: steps.build.outcome == 'success'
+      run: |
+        docker run --rm --entrypoint "" ghcr.io/${{ github.repository }}:${{ github.ref }} python -m unittest discover tests '*_test.py' 
+
+    - name: Log in to GitHub Container Registry
+      id: registry_login
+      if: steps.test.outcome == 'success' && github.event_name != 'pull_request'
+      run: |
+        echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Push Docker image
+      if: steps.registry_login.outcome == 'success' && github.event_name != 'pull_request'
+      run: |
+        docker push ghcr.io/${{ github.repository }}:${{ github.ref }}
