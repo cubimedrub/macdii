@@ -6,15 +6,13 @@ nextflow.preview.output = true
 // Parameters
 params.spectraFolder = ""
 params.analytes = ""
-params.resultsFolder = ""
+params.resultsFolder = "macdii_results"
 params.rtStart = 10
 params.rtEnd = 110
 params.precursorToleranceLower = 10
 params.precursorToleranceUpper = 10
 params.fragmentToleranceLower = 10
 params.fragmentToleranceUpper = 10
-
-params.resultsFolder = "macdii_results"
 
 // Runtime parameters
 // Memory for the Thermo Raw File Parser, used 24 GB for a Raw file with 257409 MS scans 
