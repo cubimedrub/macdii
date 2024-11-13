@@ -91,9 +91,9 @@ def main():
                                             spectrum["id"],
                                             ion,
                                             spectrum["intensity array"][ion_idx],
-                                            spectrum["selectedIonList"][0][
-                                                "selected ion m/z"
-                                            ],
+                                            spectrum["precursorList"]["precursor"][0][
+                                                "selectedIonList"
+                                            ]["selectedIon"][0]["selected ion m/z"],
                                         )
                                     )
 
