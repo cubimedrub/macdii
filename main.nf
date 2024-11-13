@@ -111,7 +111,7 @@ process macdaii {
 
 workflow  {
     main:
-    analytes = Channel.fromPath(params.analytes)
+    analytes = Channel.fromPath(params.analytes).first()
 
     // Retrieve input files
 	thermo_raw_files = Channel.fromPath(params.spectraFolder + "/*.raw")
