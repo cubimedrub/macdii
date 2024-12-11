@@ -13,6 +13,7 @@ params.precursorToleranceLower = 10
 params.precursorToleranceUpper = 10
 params.fragmentToleranceLower = 10
 params.fragmentToleranceUpper = 10
+params.output_type = "tsv"
 
 // Runtime parameters
 // Memory for the Thermo Raw File Parser, used 24 GB for a Raw file with 257409 MS scans 
@@ -105,7 +106,7 @@ process macdaii {
     script:
     """
     mkdir ${mzml_file.baseName}
-    python -m macdii ${rt_start} ${rt_end} ${precursor_tolerance_lower} ${precursor_tolerance_upper} ${fragment_tolerance_lower} ${fragment_tolerance_upper} ${analytes} ./${mzml_file.baseName} $mzml_file
+    python -m macdii --output-type ${params.output_type} ${rt_start} ${rt_end} ${precursor_tolerance_lower} ${precursor_tolerance_upper} ${fragment_tolerance_lower} ${fragment_tolerance_upper} ${analytes} ./${mzml_file.baseName} $mzml_file
     """
 }
 
