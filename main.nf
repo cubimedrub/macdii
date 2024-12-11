@@ -85,7 +85,7 @@ process convert_bruker_raw_folders {
 }
 
 process macdaii {
-    container 'ghcr.io/cubimedrub/macdii:0.0.3'
+    container 'ghcr.io/cubimedrub/macdii:0.0.4'
     containerOptions '--entrypoint ""'
     errorStrategy 'ignore'
     cpus 1
