@@ -24,7 +24,7 @@ def main():
 
     analytes = []
     with open(args.analytes_file, "r", encoding="utf-8") as file:
-        analytes = Analyte.from_csv(
+        analytes = Analyte.from_tsv(
             file,
             args.precursor_tol_lower,
             args.precursor_tol_upper,

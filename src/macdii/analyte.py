@@ -104,7 +104,7 @@ class Analyte:
         return self.qualifier_mz_range[0] <= mz <= self.qualifier_mz_range[1]
 
     @classmethod
-    def from_csv(
+    def from_tsv(
         cls,
         csv_content: TextIO,
         precursor_tolerance_lower: float,
@@ -113,7 +113,7 @@ class Analyte:
         fragment_tolerance_upper: float,
     ) -> List[Self]:
         """
-        Read analytes from a CSV file.
+        Read analytes from a TSV file.
 
         Parameters
         ----------
@@ -130,6 +130,7 @@ class Analyte:
         """
         reader = csv.reader(
             csv_content,
+            delimiter="\t"
         )
         # skip header
         next(reader)
