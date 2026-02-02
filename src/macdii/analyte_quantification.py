@@ -1,57 +1,96 @@
 """Simple quantification of analytes."""
-
-# std imports
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Self
+from typing import Dict, List, LiteralString, Self, Tuple
 
-# external imports
 import pandas as pd
 
-# internal imports
 from macdii.analyte import Analyte
-from macdii.analyte_match import AnalyteMatch
+from macdii.analyte_match import AnalyteMatch, Peak
 from macdii.utils import dataframe_to_file
 
+DF_COLUMNS: Tuple[LiteralString, ...] = (
+    "analyte",
+    "average_quantifier_mz",
+    "average_quantifier_intensity",
+    "count",
+)
 
 @dataclass
 class AnalyteQuantification:
     """Simple quantification of an analyte. Calculates the average m/z and intensity of a set of matches."""
 
-    analyte: Analyte
+    analyte : Analyte
     """Analyte."""
 
-    mz_average: float
+    average_mz : float
     """Average m/z of the matches."""
 
-    intensity_average: float
+    average_intensity : float
     """Average intensity of the matches."""
 
-    def __init__(self, matches: List[AnalyteMatch]):
+    count : int
+    """Number of matches used for quantification."""
+
+    def __init__(self, analyte: Analyte, sum_quantifier: Peak, count: int) -> None:
         """
         Create a new quantification of an analyte.
 
         Parameters
         ----------
-        matches : List[AnalyteMatch]
-            List of matches between analytes quantifier and MS2 spectra
-
-        Raises
-        ------
-        ValueError
-            In case matches of different analytes are passed
+        analyte : Analyte
+            Analyte to be quantified
+        sum_quantifier : Peak
+            Peak quantifier to be used for quantification
+        count : int
+            Number of matches to be used for quantification
         """
 
-        # Checks that all matches have the same analyte
-        if not all([matches[0].analyte.name == m.analyte.name for m in matches]):
-            raise ValueError("All matches must have the same analyte.")
-
-        self.analyte = matches[0].analyte
-        self.mz_average = sum(m.mz for m in matches) / len(matches)
-        self.intensity_average = sum(m.intensity for m in matches) / len(matches)
+        self.analyte = analyte
+        self.average_mz = sum_quantifier.mz / count
+        self.average_intensity = sum_quantifier.intensity / count
+        self.count = count
 
     def __str__(self) -> str:
-        return f"{self.analyte.name}\t{self.mz_average}\t{self.intensity_average}"
+        return f"{self.analyte.name}\t{self.average_mz}\t{self.average_intensity}\t{self.count}"
+
+    @classmethod
+    def from_matches(cls, matches: List[AnalyteMatch]) -> List["AnalyteQuantification"]:
+        """
+        Create a new quantification of an analyte from a list of matches.
+
+        Parameters
+        ----------
+        matches : List[AnalyteMatch]
+            List of matches to be used for quantification
+
+        Returns
+        -------
+        AnalyteQuantification
+            New quantification of the analyte
+        """
+
+        quantifications: List[AnalyteQuantification] = []
+
+        grouped_matches: Dict[str, List[AnalyteMatch]] = defaultdict(list)
+
+        for match in matches:
+            grouped_matches[match.analyte.name].append(match)
+
+        for group in grouped_matches.values():
+            sum_quantifier_peak = Peak(0, 0)
+            for match in group:
+                sum_quantifier_peak += match.experimental_quantifier
+
+            quantifications.append(
+                AnalyteQuantification(
+                    group[0].analyte,
+                    sum_quantifier_peak,
+                    count = len(group)
+                )
+            )
+        return quantifications
 
     @classmethod
     def to_file(
@@ -68,5 +107,17 @@ class AnalyteQuantification:
         quantifications : List[&quot;AnalyteQuantification&quot;]
             List of quantifications to be written to the file
         """
-        df = pd.DataFrame(quantifications)
+
+        df_data = [
+            [
+                quant.analyte.name,
+                quant.average_mz,
+                quant.average_intensity,
+                quant.count
+            ]
+            for quant in quantifications
+        ]
+
+
+        df = pd.DataFrame(df_data, columns=DF_COLUMNS)
         dataframe_to_file(df, file_path)

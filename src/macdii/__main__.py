@@ -1,18 +1,13 @@
 """Mass Centric Direct Infusion Inspector for searching targeted m/z in mzML files.
 """
+from typing import List, Optional
 
-# std imports
-from collections import defaultdict
-from pathlib import Path
+from pyteomics.mzml import read as read_mzml
 
-# 3rd party imports
-from pyteomics.mzml import read as read_mzml  # type: ignore[import-untyped]
-
-# internal imports
+from macdii.analyte import Analyte
+from macdii.analyte_match import AnalyteMatch, Peak, Precursor
 from macdii.analyte_quantification import AnalyteQuantification
 from macdii.cli import Cli
-from macdii.analyte import Analyte
-from macdii.analyte_match import AnalyteMatch, Ms2AnalyteMatch
 from macdii.utils import time_to_seconds
 
 
@@ -33,9 +28,7 @@ def main():
         )
 
     # Create dictionaries to store matches for precursors, quantifiers, and qualifiers
-    matching_precursors = defaultdict(list)
-    matching_quantifiers = defaultdict(list)
-    matching_qualifiers = defaultdict(list)
+    matching_fragments: List[AnalyteMatch] = []
 
     # Iterate over all mzML files and open them
     for mzml_path in args.mzml_paths:
@@ -50,78 +43,64 @@ def main():
                 )
                 if not args.rt_start <= scan_start_time <= args.rt_stop:
                     continue
+
+                if spectrum["ms level"] != 2:
+                    continue
+
+                if len(spectrum["precursorList"])== 0:
+                    continue
+
+                precursor = Precursor(
+                    spectrum["precursorList"]["precursor"][0][
+                        "selectedIonList"
+                    ]["selectedIon"][0]["selected ion m/z"],
+                    spectrum["precursorList"]["precursor"][0][
+                        "selectedIonList"
+                    ]["selectedIon"][0]["charge state"],
+                )
+
                 # Check if any analyte matches on of the measured ions
                 for analyte in analytes:
+                    if not analyte.precursor_contains(precursor.mz):
+                        continue
+
+                    quantifier_peak: Optional[Peak] = None
+                    qualifier_peak: Optional[Peak] = None
+
                     for ion_idx, ion in enumerate(spectrum["m/z array"]):
-                        match spectrum["ms level"]:
-                            case 1:
-                                if not analyte.precursor_contains(ion):
-                                    continue
-                                # Add the match to the list of precursor matches
-                                matching_precursors[analyte.name].append(
-                                    AnalyteMatch(
-                                        analyte,
-                                        mzml_path.name,
-                                        spectrum["id"],
-                                        ion,
-                                        spectrum["intensity array"][ion_idx],
-                                    )
-                                )
-                            case 2:
-                                if analyte.quantifier_contains(ion):
-                                    # Add the match to the list of quantifier matches
-                                    matching_quantifiers[analyte.name].append(
-                                        Ms2AnalyteMatch(
-                                            analyte,
-                                            mzml_path.name,
-                                            spectrum["id"],
-                                            ion,
-                                            spectrum["intensity array"][ion_idx],
-                                            spectrum["precursorList"]["precursor"][0][
-                                                "selectedIonList"
-                                            ]["selectedIon"][0]["selected ion m/z"],
-                                        )
-                                    )
-                                elif analyte.qualifier_contains(ion):
-                                    # Add the match to the list of qualifier matches
-                                    matching_qualifiers[analyte.name].append(
-                                        Ms2AnalyteMatch(
-                                            analyte,
-                                            mzml_path.name,
-                                            spectrum["id"],
-                                            ion,
-                                            spectrum["intensity array"][ion_idx],
-                                            spectrum["precursorList"]["precursor"][0][
-                                                "selectedIonList"
-                                            ]["selectedIon"][0]["selected ion m/z"],
-                                        )
-                                    )
+                        if analyte.quantifier_contains(ion):
+                            quantifier_peak = Peak(
+                                ion,
+                                spectrum["intensity array"][ion_idx],
+                            )
+                        elif analyte.qualifier_contains(ion):
+                            qualifier_peak = Peak(
+                                ion,
+                                spectrum["intensity array"][ion_idx],
+                            )
+
+                    if quantifier_peak is not None:
+                        matching_fragments.append(
+                            AnalyteMatch(
+                                analyte,
+                                mzml_path.name,
+                                spectrum["id"],
+                                precursor,
+                                quantifier_peak,
+                                qualifier_peak,
+                            )
+                        )
 
     # Write the matches to TSV files
 
     AnalyteMatch.to_file(
-        args.output_folder.joinpath(f"precursor_matches.{args.output_type}"),
-        [match for matches in matching_precursors.values() for match in matches],
+        args.output_folder.joinpath(f"quanitfier_matches.{args.output_type}"),
+        matching_fragments
     )
 
-    Ms2AnalyteMatch.to_file(
-        args.output_folder.joinpath(f"quantifier_matches.{args.output_type}"),
-        [match for matches in matching_quantifiers.values() for match in matches],
-    )
+    analyte_quantifications = AnalyteQuantification.from_matches(matching_fragments)
 
-    Ms2AnalyteMatch.to_file(
-        args.output_folder.joinpath(f"qualifier_matches.{args.output_type}"),
-        [match for matches in matching_qualifiers.values() for match in matches],
-    )
-
-    AnalyteQuantification.to_file(
-        args.output_folder.joinpath(f"quantification.{args.output_type}"),
-        [
-            AnalyteQuantification(matches)
-            for matches in matching_quantifiers.values()
-            if len(matches) > 0
-        ],
-    )
+    AnalyteQuantification.to_file(args.output_folder.joinpath(f"quantification.{args.output_type}"), analyte_quantifications)
 
 
 if __name__ == "__main__":

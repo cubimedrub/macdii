@@ -67,7 +67,7 @@ class Cli:
             "analytes_file",
             type=Path,
             help=(
-                "CSV files with analytes. Columns: name, precursor mz, fragment quantifier mz, fragment qualifier mz"
+                "TSV files with analytes. Columns: name, precursor mz, quantifier_mz, qualifier_mz"
             ),
         )
 

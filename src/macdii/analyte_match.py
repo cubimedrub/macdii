@@ -1,21 +1,63 @@
 """Matches between analytes and MS1 and MS2 spectra."""
 
-# std imports
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Self
+from typing import List, LiteralString, Optional, Self, Tuple
 
-# external imports
 import pandas as pd
 
-# internal imports
 from macdii.analyte import Analyte
 from macdii.utils import dataframe_to_file
 
+DF_COLUMNS: Tuple[LiteralString, ...] = (
+    "analyte",
+    "filename",
+    "spectrum_id",
+    "theoretical_precursor_mz",
+    "experimental_precursor_mz",
+    "experimental_precursor_charge",
+    "theoretical_quantifier_mz",
+    "experimental_quantifier_mz",
+    "experimental_quantifier_intensity",
+    "theoretical_qualifier_mz",
+    "experimental_qualifier_mz",
+    "experimental_qualifier_intensity",
+)
+
+
+@dataclass
+class Peak:
+    mz: float
+    intensity: int
+
+    def __init__(self, mz: float, intensity: int):
+        self.mz = mz
+        self.intensity = intensity
+
+    def to_tsv(self) -> str:
+        return f"{self.mz}\t{self.intensity}"
+
+    def __iadd__(self, value: Self):
+        self.mz += value.mz
+        self.intensity += value.intensity
+        return self
+
+
+@dataclass
+class Precursor:
+    mz: float
+    charge: int
+
+    def __init__(self, mz: float, charge: int):
+        self.mz = mz
+        self.charge = charge
+
+    def to_tsv(self) -> str:
+        return f"{self.mz}\t{self.charge}"
 
 @dataclass
 class AnalyteMatch:
-    """Match between analyte and MS1 spectrum."""
+    """Match between analyte and MS2 spectrum."""
 
     analyte: Analyte
     """Analyte."""
@@ -26,19 +68,23 @@ class AnalyteMatch:
     spectrum_id: str
     """ID of the spectrum."""
 
-    mz: float
-    """Observed m/z."""
+    experimental_precursor: Precursor
+    """Experimental precursor m/z and charge."""
 
-    intensity: float
-    """Intensity of the observed m/z."""
+    experimental_quantifier: Peak
+    """Experimental quantifier m/z and intensity."""
+
+    experimental_qualifier: Optional[Peak]
+    """Experimental qualifier m/z and intensity."""
 
     def __init__(
         self,
         analyte: Analyte,
         filename: str,
         spectrum_id: str,
-        mz: float,
-        intensity: float,
+        experimental_precursor: Precursor,
+        experimental_quantifier: Peak,
+        experimental_qualifier: Optional[Peak]
     ):
         """Create a new match between a targeted m/z and an observed m/z in a spectrum.
 
@@ -50,95 +96,52 @@ class AnalyteMatch:
             Filename of the mzML file containing the spectrum.
         spectrum_id : str
             ID of the spectrum.
-        mz : float
-            Observed m/z.
-        intensity : float
-            Intensity of the observed m/z.
-        targeted_mz : float
-            Targeted m/z for grouping
+        experimental_precursor: Precursor
+            Experimental precursor m/z and charge.
+        experimental_quantifier: Peak
+            Experimental quantifier m/z and intensity.
+        experimental_qualifier: Optional[Peak]
+            Experimental qualifier m/z and intensity.
+
         """
         self.analyte = analyte
         self.filename = filename
         self.spectrum_id = spectrum_id
-        self.mz = mz
-        self.intensity = intensity
+        self.experimental_precursor = experimental_precursor
+        self.experimental_quantifier = experimental_quantifier
+        self.experimental_qualifier = experimental_qualifier
 
     def __str__(self) -> str:
         """Returns a TSV representation of the match."""
-        return f"{self.analyte.name}\t{self.filename}\t{self.spectrum_id}\t{self.mz}\t{self.intensity}"
-
-    @classmethod
-    def to_file(cls, file_path: Path, matches: List[Self]) -> None:
-        """Write a list of matches to a file."""
-        df = pd.DataFrame(matches)
-        dataframe_to_file(df, file_path)
-
-
-@dataclass
-class Ms2AnalyteMatch(AnalyteMatch):
-    """
-    Represents a match between a targeted m/z and an observed m/z in a spectrum.
-    In addition to the parent class, it also contains the experimental precursor m/z and a flag indicating if
-    the analytes precursor m/z is matching the experimental one.
-    """
-
-    analyte: Analyte
-    """Analyte."""
-
-    filename: str
-    """Filename of the mzML file containing the spectrum."""
-
-    spectrum_id: str
-    """ID of the spectrum."""
-
-    mz: float
-    """Observed m/z."""
-
-    intensity: float
-    """Intensity of the observed m/z."""
-
-    experimental_precursor: float
-    """Experimental precursor m/z."""
-
-    is_precursor_matching: bool
-    """Flag indicating if the analytes precursor m/z is matching the experimental one."""
-
-    def __init__(
-        self,
-        analyte: Analyte,
-        filename: str,
-        spectrum_id: str,
-        mz: float,
-        intensity: float,
-        experimental_precursor: float,
-    ):
-        """Create a new match between a targeted m/z and an observed m/z in a spectrum.
-
-        Parameters
-        ----------
-        analyte : Analyte
-            Analyte.
-        filename : str
-            Filename of the mzML file containing the spectrum.
-        spectrum_id : str
-            ID of the spectrum.
-        mz : float
-            Observed m/z.
-        intensity : float
-            Intensity of the observed m/z.
-        targeted_mz : float
-            Targeted m/z for grouping
-        experimental_precursor : float
-            Experimental precursor m/z
-        """
-        super().__init__(analyte, filename, spectrum_id, mz, intensity)
-        self.experimental_precursor = experimental_precursor
-        self.is_precursor_matching = self.analyte.precursor_contains(
-            self.experimental_precursor
+        experimental_qualifier = str(self.experimental_qualifier) if self.experimental_qualifier else ""
+        return (
+            f"{self.analyte.name}\t{self.filename}\t{self.spectrum_id}\t"
+            f"{self.analyte.precursor_mz}\t{self.experimental_precursor}\t"
+            f"{self.analyte.quantifier_mz}\t{self.experimental_quantifier}\t"
+            f"{self.analyte.qualifier_mz}\t{experimental_qualifier}"
         )
 
     @classmethod
     def to_file(cls, file_path: Path, matches: List[Self]) -> None:
         """Write a list of matches to a file."""
-        df = pd.DataFrame(matches)
+
+        df_data = [
+            [
+                match.analyte.name,
+                match.filename,
+                match.spectrum_id,
+                match.analyte.precursor_mz,
+                match.experimental_precursor.mz,
+                match.experimental_precursor.charge,
+                match.analyte.quantifier_mz,
+                match.experimental_quantifier.mz,
+                match.experimental_quantifier.intensity,
+                match.analyte.qualifier_mz,
+                match.experimental_qualifier.mz if match.experimental_qualifier else None,
+                match.experimental_qualifier.intensity if match.experimental_qualifier else None,
+            ]
+            for match in matches
+        ]
+
+        df = pd.DataFrame(df_data, columns=DF_COLUMNS)
         dataframe_to_file(df, file_path)

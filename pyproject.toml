@@ -15,8 +15,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black",
     "honcho",
     "pandas-stubs",
-    "pylint",
+    "ruff",
+    "ty",
 ]

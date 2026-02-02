@@ -1,10 +1,8 @@
 """Function tests of analyte class"""
 
-# std import
 from unittest import TestCase
 
-# local import
-from macdii.analyte import Analyte  # type: ignore
+from macdii.analyte import Analyte
 
 
 class AnalyteTests(TestCase):

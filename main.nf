@@ -1,7 +1,6 @@
 #!/usr/bin/env nextflow
 
 nextflow.enable.dsl=2
-nextflow.preview.output = true
 
 // Parameters
 params.spectraFolder = ""
@@ -16,13 +15,13 @@ params.fragmentToleranceUpper = 10
 params.output_type = "tsv"
 
 // Runtime parameters
-// Memory for the Thermo Raw File Parser, used 24 GB for a Raw file with 257409 MS scans 
+// Memory for the Thermo Raw File Parser, used 24 GB for a Raw file with 257409 MS scans
 // and 4GB for a Raw file with 11352 MS scans (measured with `/usr/bin/time -v ...`). 10 GB seems legit for most cases.
-// Based on max virtual memory 
+// Based on max virtual memory
 params.file_conversion__thermo_raw_conversion_mem = "10 GB"
-// Memory for the tdf2mzml, used 0.39 GB for a Raw file with 298748 MS scans 
+// Memory for the tdf2mzml, used 0.39 GB for a Raw file with 298748 MS scans
 // and 0.14GB for a Raw file with 35023 MS scans (measured with `/usr/bin/time -v ...`). 5 GB seems more then enough.
-// Based on max virtual memory 
+// Based on max virtual memory
 params.file_conversion__bruker_raw_conversion_mem = "5 GB"
 
 
@@ -33,9 +32,8 @@ params.file_conversion__bruker_raw_conversion_mem = "5 GB"
  * @return mzML files
  */
 process convert_thermo_raw_files {
-    container 'chambm/pwiz-skyline-i-agree-to-the-vendor-licenses'
+    label "msconvert_image"
     memory params.file_conversion__thermo_raw_conversion_mem
-    errorStrategy 'ignore'
 
     input:
     path raw_file
@@ -49,7 +47,7 @@ process convert_thermo_raw_files {
     script:
     """
     if [ ! -f ${raw_file.getBaseName()}.mzML ]; then
-        wine msconvert ${raw_file} --mzML --zlib --filter "peakPicking true 1-"
+        wine msconvert --mzML --zlib --filter "peakPicking vendor msLevel=1-" ${raw_file}
     else
         echo "File ${raw_file.getBaseName()}.mzML already exists"
     fi
@@ -64,9 +62,7 @@ process convert_thermo_raw_files {
  * @return mzML file
  */
 process convert_bruker_raw_folders {
-    container 'mfreitas/tdf2mzml'
-    containerOptions { "-v ${raw_folder.getParent()}:/data" }
-    errorStrategy 'ignore'
+    label "tdf2mzml_image"
 
     // Uses all cores
     cpus Runtime.runtime.availableProcessors()
@@ -74,20 +70,20 @@ process convert_bruker_raw_folders {
 
     input:
     path raw_folder
-    
+
     output:
     path "${raw_folder.baseName}.mzML"
 
     script:
     """
-    tdf2mzml.py -i ${raw_folder} -o ${raw_folder.baseName}.mzML --ms1_type centroid
+    tdf2mzml -i ${raw_folder} --compression "zlib" -o ${raw_folder.baseName}.mzML
     """
 }
 
 process macdaii {
-    container 'ghcr.io/cubimedrub/macdii:0.0.4'
-    containerOptions '--entrypoint ""'
-    errorStrategy 'ignore'
+    publishDir params.resultsFolder, mode: 'move'
+
+    label "macdii_image"
     cpus 1
 
     input:
@@ -98,15 +94,15 @@ process macdaii {
     val fragment_tolerance_lower
     val fragment_tolerance_upper
     path analytes
-    path mzml_file
+    path mzml_files
 
     output:
-    path "${mzml_file.baseName}"
+    path "macdii_results"
 
     script:
     """
-    mkdir ${mzml_file.baseName}
-    python -m macdii --output-type ${params.output_type} ${rt_start} ${rt_end} ${precursor_tolerance_lower} ${precursor_tolerance_upper} ${fragment_tolerance_lower} ${fragment_tolerance_upper} ${analytes} ./${mzml_file.baseName} $mzml_file
+    mkdir macdii_results
+    python -m macdii --output-type ${params.output_type} ${rt_start} ${rt_end} ${precursor_tolerance_lower} ${precursor_tolerance_upper} ${fragment_tolerance_lower} ${fragment_tolerance_upper} ${analytes} ./macdii_results ${mzml_files.join(' ')}
     """
 }
 
@@ -114,16 +110,20 @@ workflow  {
     main:
     analytes = Channel.fromPath(params.analytes).first()
 
-    // Retrieve input files
+    // Collect thermo files
 	thermo_raw_files = Channel.fromPath(params.spectraFolder + "/*.raw")
 
+	// Collect bruker folder
 	bruker_raw_folders = Channel.fromPath(params.spectraFolder + "/*.d", type: 'dir')
+
+	// Collect mzmls
     mzmls = Channel.fromPath(params.spectraFolder + "/*.mzML")
 
+    // Convert into open formats
     thermo_mzmls = convert_thermo_raw_files(thermo_raw_files)
     bruker_mzmls = convert_bruker_raw_folders(bruker_raw_folders)
-    
-    mzmls = mzmls.concat(thermo_mzmls, bruker_mzmls)
+
+    mzmls = mzmls.concat(thermo_mzmls, bruker_mzmls).collect()
 
     results = macdaii(
         params.rtStart,
@@ -135,28 +135,4 @@ workflow  {
         analytes,
         mzmls
     )
-
-    publish:
-    results >> params.resultsFolder
 }
-
-/**
- * Move the output files to the results folder
- */
-output {
-    mode "move"
-}
-
-/**
- * Once https://github.com/nextflow-io/nextflow/issues/5443#issuecomment-2445609593
- * is resolved and MAcWorP is updated to 24.10
- * we can use the following code to move the output files to the results folder
- * and replace `results >> params.resultsFolder` with `results >> "root"`
- * in the workflow
- */
-// output {
-//     "root" {
-//         mode "move"
-//         path "."
-//     }
-// }
