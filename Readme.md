@@ -58,9 +58,9 @@ Converting files into mzML can be done via [Proteowizard msConvert](https://prot
 ### Nextflow
 The workflows does not have any help functions.
 
-Run matching `nextflow run -profile docker main.nf --rtStart <RETENTION_START_TIME_IN_SEC> --rtEnd RETENTIONS_STOP_TIME_IN_SEC> --precursorToleranceLower <LOWER_PRECURSOR_TOLERANCE_IN_PPM> --precursorToleranceUpper <UPPER_PRECURSOR_TOLERANCE_IN_PPM> --fragmentToleranceLower <LOWER_FRAGMENT_TOLERANCE_IN_PPM> --fragmentToleranceUpper <UPPER_FRAGMENT_TOLERANCE_IN_PPM> --spectraFolder <PATH_TO_FOLDE_CONTAINING_SPECTRUM_FILES> --analytes <ANALYTES_TSV> --resultsFolder <PATH_TO_OUTPUT_FOLDER>`
-      e.g.    
-      `nextflow run -profile docker main.nf --rtStart 10 --rtEnd 110 --precursorToleranceLower 10 --precursorToleranceUpper 10 --fragmentToleranceLower 10 --fragmentToleranceUpper 10 --spectraFolder test_data/my_project/raws --analytes test_data/my_project/analytes.tsv --resultsFolder macdii_results`  
+Run matching `nextflow run -profile docker main.nf --rtStart <RETENTION_START_TIME_IN_SEC> --rtEnd RETENTIONS_STOP_TIME_IN_SEC> --precursorToleranceLower <LOWER_PRECURSOR_TOLERANCE_IN_PPM> --precursorToleranceUpper <UPPER_PRECURSOR_TOLERANCE_IN_PPM> --fragmentToleranceLower <LOWER_FRAGMENT_TOLERANCE_IN_PPM> --fragmentToleranceUpper <UPPER_FRAGMENT_TOLERANCE_IN_PPM> --spectraFolder <PATH_TO_FOLDE_CONTAINING_SPECTRUM_FILES> --analytes <ANALYTES_TSV> --resultsFolder <PATH_TO_OUTPUT_FOLDER>`   
+e.g.    
+`nextflow run -profile docker main.nf --rtStart 10 --rtEnd 110 --precursorToleranceLower 10 --precursorToleranceUpper 10 --fragmentToleranceLower 10 --fragmentToleranceUpper 10 --spectraFolder test_data/my_project/raws --analytes test_data/my_project/analytes.tsv --resultsFolder macdii_results`  
 
 
 ## Results
