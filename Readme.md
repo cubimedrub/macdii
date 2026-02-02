@@ -63,10 +63,15 @@ Run matching `nextflow run -profile docker main.nf --rtStart <RETENTION_START_TI
       `nextflow run -profile docker main.nf --rtStart 10 --rtEnd 110 --precursorToleranceLower 10 --precursorToleranceUpper 10 --fragmentToleranceLower 10 --fragmentToleranceUpper 10 --spectraFolder test_data/my_project/raws --analytes test_data/my_project/analytes.tsv --resultsFolder macdii_results`  
 
 
-
-
 ## Results
 MaCDII produces 4 result files.
 
 1. `quantifier_matches.tsv`: Matching quantifiers
 2. `quantification.tsv`: Average m/z and intensities of matched quantifiers per analyte
+
+## Development
+### Setup
+Use the Python/Conda installation for development. Romatting and typechecking is done via [Ruff](https://docs.astral.sh/ruff/) and [Ty](https://docs.astral.sh/ty/).
+
+### Testing
+python -m unittest discover -s ./tests -p '*_test.py'
