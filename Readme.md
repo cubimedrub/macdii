@@ -71,7 +71,7 @@ MaCDII produces 4 result files.
 
 ## Development
 ### Setup
-Use the Python/Conda installation for development. Romatting and typechecking is done via [Ruff](https://docs.astral.sh/ruff/) and [Ty](https://docs.astral.sh/ty/).
+Use the Python/Conda installation for development. Formatting and typechecking is done via [Ruff](https://docs.astral.sh/ruff/) and [Ty](https://docs.astral.sh/ty/).
 
 ### Testing
-python -m unittest discover -s ./tests -p '*_test.py'
+`python -m unittest discover -s ./tests -p '*_test.py'?
