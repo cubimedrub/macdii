@@ -1,6 +1,6 @@
 # MaCDII - Mass Centric Direct Infusion Inspector
 
-Simple tool for searching fragment ions of analytes in direct infusion PRM runs. An analyte is defined by a precursor m/z, a quantifier m/z (unique MS2 ion) and a qualifier m/z (non-unique MS2 ion). A analyte matches a MS2 spectum if the analyte precurosor matches the spectrum precursor and the spectrum contains a fragment mathcing the analytes quantifier fragment.
+Simple tool for searching fragment ions of metabolomic and lipidomic analytes in direct infusion PRM MS runs. An analyte is defined by a precursor m/z, a quantifier m/z (unique MS2 ion) and a optional qualifier m/z (non-unique MS2 ion). A analyte matches a MS2 spectum if the analyte precurosor matches the spectrum precursor and the spectrum contains a fragment matching the analytes quantifier m/z. 
 
 For each analyte the average m/z and intensity of the quantifiers matches are calculated for quantification. 
 
@@ -39,9 +39,10 @@ Use your favorite spreadsheet software to create a table like:
 | --- | --- | --- | --- |
 | FA 2:0 | 194.0564 | 151.0456 | 137.0345 |
 
-Keep the columns in this order, for simplicity there is nor mapping done internally.
-
-Safe the table as TSV or tab-separated file.
+* Keep the columns in this order.
+* Precursor m/z has to be the same as stated in the PRM method. If it was rounded it needs to be rounded here.
+* Quantifier m/z can be 0.0 if unneeded, which will leave the respective columns in the output file empty
+* Safe the analyte table as tab-separate-format (TSV) and make sure the values uses `.` as decimal mark.
 
 
 ### Python
@@ -60,7 +61,7 @@ The workflows does not have any help functions.
 
 Run matching `nextflow run -profile docker main.nf --rtStart <RETENTION_START_TIME_IN_SEC> --rtEnd RETENTIONS_STOP_TIME_IN_SEC> --precursorToleranceLower <LOWER_PRECURSOR_TOLERANCE_IN_PPM> --precursorToleranceUpper <UPPER_PRECURSOR_TOLERANCE_IN_PPM> --fragmentToleranceLower <LOWER_FRAGMENT_TOLERANCE_IN_PPM> --fragmentToleranceUpper <UPPER_FRAGMENT_TOLERANCE_IN_PPM> --spectraFolder <PATH_TO_FOLDE_CONTAINING_SPECTRUM_FILES> --analytes <ANALYTES_TSV> --resultsFolder <PATH_TO_OUTPUT_FOLDER>`   
 e.g.    
-`nextflow run -profile docker main.nf --rtStart 10 --rtEnd 110 --precursorToleranceLower 10 --precursorToleranceUpper 10 --fragmentToleranceLower 10 --fragmentToleranceUpper 10 --spectraFolder test_data/my_project/raws --analytes test_data/my_project/analytes.tsv --resultsFolder macdii_results`  
+`nextflow run -profile docker main.nf --rtStart 10 --rtEnd 110 --precursorToleranceLower 10 --precursorToleranceUpper 10 --fragmentToleranceLower 20000 --fragmentToleranceUpper 20000 --spectraFolder test_data/my_project/raws --analytes test_data/my_project/analytes.tsv --resultsFolder macdii_results`  
 
 
 ## Results

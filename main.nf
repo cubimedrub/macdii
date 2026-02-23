@@ -10,8 +10,8 @@ params.rtStart = 10
 params.rtEnd = 110
 params.precursorToleranceLower = 10
 params.precursorToleranceUpper = 10
-params.fragmentToleranceLower = 10
-params.fragmentToleranceUpper = 10
+params.fragmentToleranceLower = 20000 // 0.02 DA
+params.fragmentToleranceUpper = 20000 // 0.02 DA
 params.output_type = "tsv"
 
 // Runtime parameters
