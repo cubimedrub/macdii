@@ -46,9 +46,9 @@ class Peak:
 @dataclass
 class Precursor:
     mz: float
-    charge: int
+    charge: Optional[int]
 
-    def __init__(self, mz: float, charge: int):
+    def __init__(self, mz: float, charge: Optional[int]):
         self.mz = mz
         self.charge = charge
 
